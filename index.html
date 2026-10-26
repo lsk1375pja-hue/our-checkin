@@ -1,88 +1,266 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#f7f6f2">
-<title>우리의 체크인</title>
+<title>Daily Goals</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f7f6f2;--card:#fff;--ink:#242620;--muted:#85877f;--line:#e8e7e0;--accent:#526b55;--soft:#eaf0e8;--warn:#a85a43}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
-main{max-width:720px;margin:auto;padding:28px 18px 48px}
-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
-.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
-h1{font-size:27px;letter-spacing:-.04em;margin:5px 0 0}.date{font-size:13px;color:var(--muted);text-align:right}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
-h2{font-size:16px;margin:0 0 6px}p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
-.pill{font-size:12px;border-radius:999px;padding:7px 10px;background:var(--soft);color:var(--accent);white-space:nowrap}
-.pill.lock{background:#f7ece7;color:var(--warn)}
-.tabs{display:flex;gap:8px;margin:18px 0 12px}.tab{flex:1;border:1px solid var(--line);background:transparent;padding:11px;border-radius:12px;color:var(--muted);font-size:14px}.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:#fafaf7;border-radius:14px;padding:14px}.stat .name{font-size:13px;color:var(--muted)}.stat strong{display:block;font-size:27px;margin:7px 0 10px;letter-spacing:-.04em}.bar{height:6px;border-radius:99px;background:#e8e8e1;overflow:hidden}.bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
-form{display:flex;gap:8px;margin:16px 0 12px}input[type=text]{min-width:0;flex:1;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:14px;background:#fff;color:var(--ink)}button{cursor:pointer;border:0;border-radius:11px;padding:11px 14px;font-size:14px;background:var(--ink);color:white}button:disabled{opacity:.35;cursor:not-allowed}.task{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}.task:last-child{border-bottom:0}.task input{width:18px;height:18px;accent-color:var(--accent)}.task span{font-size:14px;flex:1;overflow-wrap:anywhere}.task.done span{color:#96988f;text-decoration:line-through}.delete{background:transparent;color:var(--muted);padding:5px 8px;font-size:18px}.empty{text-align:center;padding:22px 8px;color:var(--muted);font-size:13px}.note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:18px}.section-title{margin:22px 2px 8px;font-size:14px;font-weight:650}
-@media(max-width:420px){main{padding:22px 13px 36px}h1{font-size:24px}.card{padding:15px}.stats{gap:8px}.stat{padding:11px}.stat strong{font-size:24px}}
+*{box-sizing:border-box}
+body{margin:0;background:#f5f5f2;color:#242424;font-family:Arial,sans-serif}
+main{max-width:620px;margin:35px auto;padding:22px}
+.card{background:white;border:1px solid #e6e6e0;border-radius:16px;padding:20px;margin:14px 0}
+h1{font-size:25px}h2{font-size:18px}
+input,button{font:inherit;padding:12px;border-radius:9px}
+input{width:100%;border:1px solid #ddd;margin:6px 0 12px}
+button{border:0;background:#242424;color:white;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+.row{display:flex;gap:8px}.row input{flex:1;min-width:0}
+.goal{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid #eee}
+.goal span{flex:1;overflow-wrap:anywhere}
+.goal input{width:19px;margin:0}
+.muted{color:#777;font-size:13px}
+.error{color:#b42318;white-space:pre-wrap}
+.good{color:#147a45}
+.hidden{display:none}
 </style>
 </head>
 <body>
 <main>
-<header><div><div class="eyebrow">DAILY CHECK-IN</div><h1>우리의 체크인</h1></div><div class="date" id="today"></div></header>
-<section class="card">
- <div class="row"><div><h2>오늘의 약속</h2><p>오전 9시까지 계획을 확정해요.</p></div><span class="pill" id="lockStatus">계획 작성 가능</span></div>
- <div class="tabs"><button class="tab active" id="meTab" type="button">내 목표</button><button class="tab" id="friendTab" type="button">친구 현황</button></div>
- <div id="privateView">
-  <div class="row"><div><h2 id="listHeading">나의 투두리스트</h2><p id="listSub">목표 내용은 나만 볼 수 있어요.</p></div><span class="pill" id="progressLabel">0%</span></div>
-  <div class="bar" style="margin-top:12px"><span id="myBar" style="width:0%"></span></div>
-  <form id="addForm"><input id="taskInput" type="text" maxlength="120" placeholder="오늘 할 일 추가..." autocomplete="off"><button id="addBtn" type="submit">추가</button></form>
-  <div id="tasks"></div>
- </div>
- <div id="friendView" hidden>
-  <h2>공유되는 건 결과뿐</h2><p style="margin:5px 0 16px">친구의 목표 내용은 보이지 않아요.</p>
-  <div class="stats">
-   <div class="stat"><div class="name">나</div><strong id="mePercent">0%</strong><div class="bar"><span id="meSharedBar" style="width:0%"></span></div><p id="meCount" style="margin-top:9px">0 / 0 완료</p></div>
-   <div class="stat"><div class="name">친구</div><strong id="friendPercent">—</strong><div class="bar"><span id="friendSharedBar" style="width:0%"></span></div><p id="friendCount" style="margin-top:9px">친구 연결 전</p></div>
-  </div>
-  <p class="note">친구 수치는 실제 연결 기능이 붙은 뒤 표시돼요. 지금 파일은 화면·동작을 확인하는 개인용 시제품입니다.</p>
- </div>
-</section>
-<section class="card">
- <div class="row"><div><h2>마감 규칙</h2><p>매일 오전 9시 이후 계획 추가·수정 잠금</p></div><span class="pill">09:00</span></div>
- <p class="note">체크는 하루 동안 계속할 수 있어요. 날짜별로 기록이 분리됩니다. 이 시제품은 기기 시간 기준으로 잠금을 표시하므로, 실제 공동 사용 시에는 서버 시간으로 마감을 검증해야 합니다.</p>
-</section>
-<p class="note">시제품 안내: 데이터는 현재 브라우저에만 저장됩니다. 친구와 실시간 공유하거나 계정 간 비공개를 보장하려면 로그인·데이터베이스·서버 권한 설정을 연결해야 합니다. 실제 공유 사이트로 배포할 때는 Supabase 같은 백엔드를 붙이면 됩니다.</p>
+  <h1>Daily Goals</h1>
+  <p class="muted">오늘의 목표를 정하고, 서로 꾸준함을 확인하는 공간</p>
+
+  <section id="login" class="card">
+    <h2>로그인</h2>
+    <label for="username">아이디</label>
+    <input id="username" autocomplete="username" placeholder="아이디">
+    <label for="password">비밀번호</label>
+    <input id="password" type="password" autocomplete="current-password" placeholder="비밀번호">
+    <button id="loginBtn" style="width:100%">로그인</button>
+    <p id="loginError" class="error"></p>
+  </section>
+
+  <section id="app" class="hidden">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div>
+          <strong id="welcome"></strong>
+          <p id="today" class="muted"></p>
+        </div>
+        <button id="logoutBtn">로그아웃</button>
+      </div>
+      <p id="deadline"></p>
+      <p class="muted">오전 9시 전에 오늘의 목표를 등록해. 9시 이후에는 완료 체크만 가능해.</p>
+    </div>
+
+    <div class="card">
+      <h2>오늘의 목표 추가</h2>
+      <form id="goalForm" class="row">
+        <input id="goalTitle" maxlength="200" placeholder="예: 수학 문제 30개 풀기" required>
+        <button id="addBtn" type="submit">추가</button>
+      </form>
+      <p id="goalError" class="error"></p>
+    </div>
+
+    <div class="card">
+      <h2>내 목표</h2>
+      <p id="progress">달성률 계산 중...</p>
+      <div style="height:8px;background:#eee;border-radius:8px;overflow:hidden">
+        <div id="bar" style="height:100%;width:0%;background:#333"></div>
+      </div>
+      <div id="goals"></div>
+      <p id="penalty"></p>
+    </div>
+  </section>
 </main>
+
 <script>
-const $=id=>document.getElementById(id);
-const now=new Date();
-const dateKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-const key=dateKey(now);
-$('today').textContent=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
-const locked=now.getHours()>=9;
-$('lockStatus').textContent=locked?'오늘 계획 잠김':'계획 작성 가능';
-$('lockStatus').classList.toggle('lock',locked);
-$('taskInput').disabled=locked;$('addBtn').disabled=locked;
-const storageKey='our-checkin-v1-'+key;
-let tasks=[];
-try{tasks=JSON.parse(localStorage.getItem(storageKey)||'[]')}catch(e){tasks=[]}
-function save(){localStorage.setItem(storageKey,JSON.stringify(tasks));render()}
-function render(){
- const root=$('tasks');root.innerHTML='';
- if(!tasks.length){root.innerHTML='<div class="empty">아직 등록한 목표가 없어요.<br>오전 9시 전에 오늘 할 일을 추가해 주세요.</div>'}
- tasks.forEach((t,i)=>{
-  const label=document.createElement('label');label.className='task'+(t.done?' done':'');
-  const cb=document.createElement('input');cb.type='checkbox';cb.checked=t.done;cb.addEventListener('change',()=>{tasks[i].done=cb.checked;save()});
-  const span=document.createElement('span');span.textContent=t.title;
-  label.append(cb,span);
-  if(!locked){const del=document.createElement('button');del.type='button';del.className='delete';del.textContent='×';del.setAttribute('aria-label','목표 삭제');del.onclick=()=>{tasks.splice(i,1);save()};label.append(del)}
-  root.append(label);
- });
- const done=tasks.filter(t=>t.done).length,pct=tasks.length?Math.round(done/tasks.length*100):0;
- $('progressLabel').textContent=pct+'%';$('myBar').style.width=pct+'%';
- $('mePercent').textContent=pct+'%';$('meSharedBar').style.width=pct+'%';$('meCount').textContent=`${done} / ${tasks.length} 완료`;
+const SUPABASE_URL = "여기에_PROJECT_URL";
+const SUPABASE_KEY = "여기에_PUBLISHABLE_KEY";
+
+const LOGIN_USERS = {
+  "user1": { email: "첫번째계정이메일@example.com", name: "나" },
+  "user2": { email: "두번째계정이메일@example.com", name: "친구" }
+};
+
+const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+let currentUser = null;
+let goals = [];
+
+const $ = id => document.getElementById(id);
+const koreaNow = () => new Date(
+  new Date().toLocaleString("en-US", {timeZone:"Asia/Seoul"})
+);
+const dateKey = () => {
+  const d = koreaNow();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+const beforeDeadline = () => {
+  const d = koreaNow();
+  return d.getHours() < 9;
+};
+
+function showApp(show) {
+  $("login").classList.toggle("hidden", show);
+  $("app").classList.toggle("hidden", !show);
 }
-$('addForm').addEventListener('submit',e=>{e.preventDefault();const v=$('taskInput').value.trim();if(!v||locked)return;tasks.push({title:v,done:false});$('taskInput').value='';save()});
-$('meTab').onclick=()=>{ $('meTab').classList.add('active');$('friendTab').classList.remove('active');$('privateView').hidden=false;$('friendView').hidden=true};
-$('friendTab').onclick=()=>{ $('friendTab').classList.add('active');$('meTab').classList.remove('active');$('privateView').hidden=true;$('friendView').hidden=false};
-render();
+
+async function login() {
+  $("loginError").textContent = "";
+  const username = $("username").value.trim();
+  const password = $("password").value;
+  const account = LOGIN_USERS[username];
+
+  if (!account) {
+    $("loginError").textContent = "아이디 또는 비밀번호를 확인해 주세요.";
+    return;
+  }
+
+  const {data, error} = await db.auth.signInWithPassword({
+    email: account.email,
+    password
+  });
+
+  if (error) {
+    $("loginError").textContent = "로그인에 실패했어요. 입력 정보와 Supabase 계정을 확인해 주세요.";
+    return;
+  }
+
+  currentUser = data.user;
+  $("welcome").textContent = account.name;
+  showApp(true);
+  await loadGoals();
+}
+
+async function loadGoals() {
+  $("goalError").textContent = "";
+  $("today").textContent = dateKey();
+  $("deadline").textContent = beforeDeadline()
+    ? "목표 설정 가능 · 오전 9시 마감"
+    : "목표 설정 마감 · 완료 체크 가능";
+
+  $("goalTitle").disabled = !beforeDeadline();
+  $("addBtn").disabled = !beforeDeadline();
+
+  const {data, error} = await db
+    .from("daily_goals")
+    .select("id,title,completed,goal_date")
+    .eq("user_id", currentUser.id)
+    .eq("goal_date", dateKey())
+    .order("created_at", {ascending:true});
+
+  if (error) {
+    $("goalError").textContent = "목표를 불러오지 못했어요: " + error.message;
+    return;
+  }
+
+  goals = data || [];
+  renderGoals();
+}
+
+function renderGoals() {
+  const done = goals.filter(g => g.completed).length;
+  const total = goals.length;
+  const rate = total ? Math.round(done / total * 100) : 0;
+
+  $("progress").textContent = total
+    ? `${done} / ${total}개 완료 · 달성률 ${rate}%`
+    : "목표가 없어요. 오전 9시 전에 목표를 추가해 주세요.";
+  $("bar").style.width = rate + "%";
+
+  $("penalty").className = "";
+  $("penalty").textContent = total === 0
+    ? "목표가 없으면 달성률을 계산할 수 없어요."
+    : rate < 80
+      ? "벌칙 대상: 오늘 달성률이 80% 미만이에요. 친구에게 밥 사기!"
+      : "벌칙 없음: 달성률이 80% 이상이에요.";
+  $("penalty").classList.add(total && rate < 80 ? "error" : "good");
+
+  const list = $("goals");
+  list.replaceChildren();
+
+  goals.forEach(goal => {
+    const item = document.createElement("div");
+    item.className = "goal";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.checked = goal.completed;
+    check.setAttribute("aria-label", goal.title);
+    check.addEventListener("change", () => updateGoal(goal, check.checked));
+
+    const title = document.createElement("span");
+    title.textContent = goal.title;
+    if (goal.completed) title.style.textDecoration = "line-through";
+
+    item.append(check, title);
+    list.append(item);
+  });
+}
+
+async function addGoal(event) {
+  event.preventDefault();
+  $("goalError").textContent = "";
+
+  if (!beforeDeadline()) {
+    $("goalError").textContent = "오전 9시가 지나 목표를 추가할 수 없어요.";
+    return;
+  }
+
+  const title = $("goalTitle").value.trim();
+  if (!title) return;
+
+  const {error} = await db.from("daily_goals").insert({
+    user_id: currentUser.id,
+    goal_date: dateKey(),
+    title
+  });
+
+  if (error) {
+    $("goalError").textContent = error.message;
+    return;
+  }
+
+  $("goalTitle").value = "";
+  await loadGoals();
+}
+
+async function updateGoal(goal, completed) {
+  const {error} = await db.from("daily_goals")
+    .update({completed})
+    .eq("id", goal.id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    alert("완료 상태 저장에 실패했어요: " + error.message);
+  }
+  await loadGoals();
+}
+
+$("loginBtn").addEventListener("click", login);
+$("password").addEventListener("keydown", e => {
+  if (e.key === "Enter") login();
+});
+$("goalForm").addEventListener("submit", addGoal);
+
+$("logoutBtn").addEventListener("click", async () => {
+  await db.auth.signOut();
+  currentUser = null;
+  goals = [];
+  showApp(false);
+});
+
+(async function init() {
+  const {data} = await db.auth.getSession();
+  if (data.session) {
+    currentUser = data.session.user;
+    const account = Object.values(LOGIN_USERS).find(
+      a => a.email === currentUser.email
+    );
+    $("welcome").textContent = account ? account.name : "사용자";
+    showApp(true);
+    await loadGoals();
+  }
+})();
 </script>
 </body>
 </html>
