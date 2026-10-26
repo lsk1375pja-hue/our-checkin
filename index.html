@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f6f2">
+<title>우리의 체크인</title>
+<style>
+:root{--bg:#f7f6f2;--card:#fff;--ink:#242620;--muted:#85877f;--line:#e8e7e0;--accent:#526b55;--soft:#eaf0e8;--warn:#a85a43}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:720px;margin:auto;padding:28px 18px 48px}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:24px}
+.eyebrow{font-size:12px;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+h1{font-size:27px;letter-spacing:-.04em;margin:5px 0 0}.date{font-size:13px;color:var(--muted);text-align:right}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin:12px 0}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h2{font-size:16px;margin:0 0 6px}p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.pill{font-size:12px;border-radius:999px;padding:7px 10px;background:var(--soft);color:var(--accent);white-space:nowrap}
+.pill.lock{background:#f7ece7;color:var(--warn)}
+.tabs{display:flex;gap:8px;margin:18px 0 12px}.tab{flex:1;border:1px solid var(--line);background:transparent;padding:11px;border-radius:12px;color:var(--muted);font-size:14px}.tab.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:#fafaf7;border-radius:14px;padding:14px}.stat .name{font-size:13px;color:var(--muted)}.stat strong{display:block;font-size:27px;margin:7px 0 10px;letter-spacing:-.04em}.bar{height:6px;border-radius:99px;background:#e8e8e1;overflow:hidden}.bar span{display:block;height:100%;background:var(--accent);border-radius:99px}
+form{display:flex;gap:8px;margin:16px 0 12px}input[type=text]{min-width:0;flex:1;border:1px solid var(--line);border-radius:11px;padding:12px;font-size:14px;background:#fff;color:var(--ink)}button{cursor:pointer;border:0;border-radius:11px;padding:11px 14px;font-size:14px;background:var(--ink);color:white}button:disabled{opacity:.35;cursor:not-allowed}.task{display:flex;align-items:center;gap:11px;padding:13px 0;border-bottom:1px solid var(--line)}.task:last-child{border-bottom:0}.task input{width:18px;height:18px;accent-color:var(--accent)}.task span{font-size:14px;flex:1;overflow-wrap:anywhere}.task.done span{color:#96988f;text-decoration:line-through}.delete{background:transparent;color:var(--muted);padding:5px 8px;font-size:18px}.empty{text-align:center;padding:22px 8px;color:var(--muted);font-size:13px}.note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:18px}.section-title{margin:22px 2px 8px;font-size:14px;font-weight:650}
+@media(max-width:420px){main{padding:22px 13px 36px}h1{font-size:24px}.card{padding:15px}.stats{gap:8px}.stat{padding:11px}.stat strong{font-size:24px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><div class="eyebrow">DAILY CHECK-IN</div><h1>우리의 체크인</h1></div><div class="date" id="today"></div></header>
+<section class="card">
+ <div class="row"><div><h2>오늘의 약속</h2><p>오전 9시까지 계획을 확정해요.</p></div><span class="pill" id="lockStatus">계획 작성 가능</span></div>
+ <div class="tabs"><button class="tab active" id="meTab" type="button">내 목표</button><button class="tab" id="friendTab" type="button">친구 현황</button></div>
+ <div id="privateView">
+  <div class="row"><div><h2 id="listHeading">나의 투두리스트</h2><p id="listSub">목표 내용은 나만 볼 수 있어요.</p></div><span class="pill" id="progressLabel">0%</span></div>
+  <div class="bar" style="margin-top:12px"><span id="myBar" style="width:0%"></span></div>
+  <form id="addForm"><input id="taskInput" type="text" maxlength="120" placeholder="오늘 할 일 추가..." autocomplete="off"><button id="addBtn" type="submit">추가</button></form>
+  <div id="tasks"></div>
+ </div>
+ <div id="friendView" hidden>
+  <h2>공유되는 건 결과뿐</h2><p style="margin:5px 0 16px">친구의 목표 내용은 보이지 않아요.</p>
+  <div class="stats">
+   <div class="stat"><div class="name">나</div><strong id="mePercent">0%</strong><div class="bar"><span id="meSharedBar" style="width:0%"></span></div><p id="meCount" style="margin-top:9px">0 / 0 완료</p></div>
+   <div class="stat"><div class="name">친구</div><strong id="friendPercent">—</strong><div class="bar"><span id="friendSharedBar" style="width:0%"></span></div><p id="friendCount" style="margin-top:9px">친구 연결 전</p></div>
+  </div>
+  <p class="note">친구 수치는 실제 연결 기능이 붙은 뒤 표시돼요. 지금 파일은 화면·동작을 확인하는 개인용 시제품입니다.</p>
+ </div>
+</section>
+<section class="card">
+ <div class="row"><div><h2>마감 규칙</h2><p>매일 오전 9시 이후 계획 추가·수정 잠금</p></div><span class="pill">09:00</span></div>
+ <p class="note">체크는 하루 동안 계속할 수 있어요. 날짜별로 기록이 분리됩니다. 이 시제품은 기기 시간 기준으로 잠금을 표시하므로, 실제 공동 사용 시에는 서버 시간으로 마감을 검증해야 합니다.</p>
+</section>
+<p class="note">시제품 안내: 데이터는 현재 브라우저에만 저장됩니다. 친구와 실시간 공유하거나 계정 간 비공개를 보장하려면 로그인·데이터베이스·서버 권한 설정을 연결해야 합니다. 실제 공유 사이트로 배포할 때는 Supabase 같은 백엔드를 붙이면 됩니다.</p>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const now=new Date();
+const dateKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const key=dateKey(now);
+$('today').textContent=now.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'short'});
+const locked=now.getHours()>=9;
+$('lockStatus').textContent=locked?'오늘 계획 잠김':'계획 작성 가능';
+$('lockStatus').classList.toggle('lock',locked);
+$('taskInput').disabled=locked;$('addBtn').disabled=locked;
+const storageKey='our-checkin-v1-'+key;
+let tasks=[];
+try{tasks=JSON.parse(localStorage.getItem(storageKey)||'[]')}catch(e){tasks=[]}
+function save(){localStorage.setItem(storageKey,JSON.stringify(tasks));render()}
+function render(){
+ const root=$('tasks');root.innerHTML='';
+ if(!tasks.length){root.innerHTML='<div class="empty">아직 등록한 목표가 없어요.<br>오전 9시 전에 오늘 할 일을 추가해 주세요.</div>'}
+ tasks.forEach((t,i)=>{
+  const label=document.createElement('label');label.className='task'+(t.done?' done':'');
+  const cb=document.createElement('input');cb.type='checkbox';cb.checked=t.done;cb.addEventListener('change',()=>{tasks[i].done=cb.checked;save()});
+  const span=document.createElement('span');span.textContent=t.title;
+  label.append(cb,span);
+  if(!locked){const del=document.createElement('button');del.type='button';del.className='delete';del.textContent='×';del.setAttribute('aria-label','목표 삭제');del.onclick=()=>{tasks.splice(i,1);save()};label.append(del)}
+  root.append(label);
+ });
+ const done=tasks.filter(t=>t.done).length,pct=tasks.length?Math.round(done/tasks.length*100):0;
+ $('progressLabel').textContent=pct+'%';$('myBar').style.width=pct+'%';
+ $('mePercent').textContent=pct+'%';$('meSharedBar').style.width=pct+'%';$('meCount').textContent=`${done} / ${tasks.length} 완료`;
+}
+$('addForm').addEventListener('submit',e=>{e.preventDefault();const v=$('taskInput').value.trim();if(!v||locked)return;tasks.push({title:v,done:false});$('taskInput').value='';save()});
+$('meTab').onclick=()=>{ $('meTab').classList.add('active');$('friendTab').classList.remove('active');$('privateView').hidden=false;$('friendView').hidden=true};
+$('friendTab').onclick=()=>{ $('friendTab').classList.add('active');$('meTab').classList.remove('active');$('privateView').hidden=true;$('friendView').hidden=false};
+render();
+</script>
+</body>
+</html>
