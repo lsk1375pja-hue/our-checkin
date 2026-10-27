@@ -165,14 +165,20 @@ async function loadGoals() {
   renderGoals();
 }
 
+
 function renderGoals() {
-  const done = goals.filter(g => g.completed).length;
-  const total = goals.length;
+  const myGoals = goals.filter(
+    goal => goal.user_id === currentUser.id
+  );
+
+  const done = myGoals.filter(g => g.completed).length;
+  const total = myGoals.length;
   const rate = total ? Math.round(done / total * 100) : 0;
 
   $("progress").textContent = total
     ? `${done} / ${total}개 완료 · 달성률 ${rate}%`
     : "목표가 없어요. 오전 9시 전에 목표를 추가해 주세요.";
+
   $("bar").style.width = rate + "%";
 
   $("penalty").className = "";
@@ -181,27 +187,36 @@ function renderGoals() {
     : rate < 80
       ? "벌칙 대상: 오늘 달성률이 80% 미만이에요. 친구에게 밥 사기!"
       : "벌칙 없음: 달성률이 80% 이상이에요.";
-  $("penalty").classList.add(total && rate < 80 ? "error" : "good");
+
+  $("penalty").classList.add(
+    total && rate < 80 ? "error" : "good"
+  );
 
   const list = $("goals");
   list.replaceChildren();
 
-  goals.forEach(goal => {
+  myGoals.forEach(goal => {
     const item = document.createElement("div");
     item.className = "goal";
+
     const check = document.createElement("input");
     check.type = "checkbox";
     check.checked = goal.completed;
     check.setAttribute("aria-label", goal.title);
-    check.addEventListener("change", () => updateGoal(goal, check.checked));
+    check.addEventListener("change", () =>
+      updateGoal(goal, check.checked)
+    );
 
     const title = document.createElement("span");
     title.textContent = goal.title;
-    if (goal.completed) title.style.textDecoration = "line-through";
+    if (goal.completed) {
+      title.style.textDecoration = "line-through";
+    }
 
-        item.append(check, title);
+    item.append(check, title);
     list.append(item);
   });
+
 
   renderFriendGoals();
 }
