@@ -221,6 +221,55 @@ function renderGoals() {
   renderFriendGoals();
 }
 
+
+function renderFriendGoals() {
+  const friend = Object.values(LOGIN_USERS).find(
+    account => account.email !== currentUser.email
+  );
+
+  const friendGoals = goals.filter(
+    goal => goal.user_id !== currentUser.id
+  );
+
+  const done = friendGoals.filter(g => g.completed).length;
+  const total = friendGoals.length;
+  const rate = total ? Math.round(done / total * 100) : 0;
+
+  $("friendProgress").textContent = total
+    ? `${friend?.name || "친구"}: ${done} / ${total}개 완료 · 달성률 ${rate}%`
+    : "친구가 오늘 등록한 목표가 없어요.";
+
+  $("friendBar").style.width = rate + "%";
+
+  $("friendPenalty").className = "";
+  $("friendPenalty").textContent = !total
+    ? "목표가 없어 달성률을 계산할 수 없어요."
+    : rate < 80
+      ? "벌칙 대상: 달성률 80% 미만"
+      : "벌칙 없음: 달성률 80% 이상";
+
+  $("friendPenalty").classList.add(
+    total && rate < 80 ? "error" : "good"
+  );
+
+  const list = $("friendGoals");
+  list.replaceChildren();
+
+  friendGoals.forEach(goal => {
+    const item = document.createElement("div");
+    item.className = "goal";
+
+    const title = document.createElement("span");
+    title.textContent = goal.title;
+
+    const status = document.createElement("span");
+    status.textContent = goal.completed ? "완료" : "미완료";
+
+    item.append(title, status);
+    list.append(item);
+  });
+}
+
 async function addGoal(event) {
   event.preventDefault();
   $("goalError").textContent = "";
