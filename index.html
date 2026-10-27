@@ -213,8 +213,35 @@ function renderGoals() {
       title.style.textDecoration = "line-through";
     }
 
-    item.append(check, title);
-    list.append(item);
+    const del = document.createElement("button");
+del.textContent = "삭제";
+del.type = "button";
+del.disabled = !beforeDeadline();
+
+del.addEventListener("click", async () => {
+  if (!beforeDeadline()) {
+    alert("오전 9시 이후에는 목표를 삭제할 수 없어요.");
+    return;
+  }
+
+  if (!confirm("이 목표를 삭제할까요?")) return;
+
+  const { error } = await db
+    .from("daily_goals")
+    .delete()
+    .eq("id", goal.id)
+    .eq("user_id", currentUser.id);
+
+  if (error) {
+    alert("삭제에 실패했어요: " + error.message);
+    return;
+  }
+
+  await loadGoals();
+});
+
+item.append(check, title, del);
+list.append(item);
   });
 
 
