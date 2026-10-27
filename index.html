@@ -151,11 +151,10 @@ async function loadGoals() {
   $("addBtn").disabled = !beforeDeadline();
 
   const {data, error} = await db
-    .from("daily_goals")
-    .select("id,title,completed,goal_date")
-    .eq("user_id", currentUser.id)
-    .eq("goal_date", dateKey())
-    .order("created_at", {ascending:true});
+  .from("daily_goals")
+  .select("id,title,completed,goal_date,user_id,created_at")
+  .eq("goal_date", dateKey())
+  .order("created_at", {ascending:true});
 
   if (error) {
     $("goalError").textContent = "목표를 불러오지 못했어요: " + error.message;
