@@ -199,9 +199,11 @@ function renderGoals() {
     title.textContent = goal.title;
     if (goal.completed) title.style.textDecoration = "line-through";
 
-    item.append(check, title);
+        item.append(check, title);
     list.append(item);
   });
+
+  renderFriendGoals();
 }
 
 async function addGoal(event) {
